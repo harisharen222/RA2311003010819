@@ -148,3 +148,101 @@ This avoids constant polling and reduces unnecessary load on the system.
 ## Summary
 
 The system provides a simple and scalable way to manage notifications. It supports both API-based retrieval and real-time delivery, while ensuring efficient handling through pagination and proper structure.
+
+
+# Stage 2 — Database Design
+
+## Database choice
+
+MongoDB is used for storing notifications.
+
+Reason:
+
+- Flexible schema allows different types of notifications without strict structure
+- Handles high read and write operations efficiently
+- Easy to scale horizontally as user base grows
+
+---
+
+## Collection design
+
+### Notifications collection
+
+{
+  "_id": "ObjectId",
+  "userId": "string",
+  "type": "Placement | Result | Event",
+  "message": "string",
+  "isRead": false,
+  "createdAt": "ISODate"
+}
+
+---
+
+## Indexing
+
+- Index on userId for fast retrieval of user-specific notifications
+- Index on isRead for filtering unread notifications
+- Compound index on (userId, isRead, createdAt) to support filtering and sorting together
+
+---
+
+## Queries
+
+Get all notifications (latest first):
+
+db.notifications.find({ userId: "123" })
+  .sort({ createdAt: -1 })
+  .limit(10)
+
+---
+
+Get unread notifications:
+
+db.notifications.find({ userId: "123", isRead: false })
+  .sort({ createdAt: -1 })
+
+---
+
+Mark notification as read:
+
+db.notifications.updateOne(
+  { _id: ObjectId("...") },
+  { $set: { isRead: true } }
+)
+
+---
+
+Create notification:
+
+db.notifications.insertOne({
+  userId: "123",
+  message: "New placement drive",
+  type: "Placement",
+  isRead: false,
+  createdAt: new Date()
+})
+
+---
+
+## Scaling considerations
+
+- As number of users increases, queries on large datasets can become slow
+- Sharding based on userId helps distribute data across multiple nodes
+- Caching frequently accessed notifications reduces database load
+- Batch writes can improve performance during high traffic
+- Old notifications can be cleaned using a TTL index on createdAt
+
+---
+
+## Possible issues with large data
+
+- Full collection scans if indexes are missing
+- Increased query latency for unread notifications
+- High write load when many notifications are created simultaneously
+
+---
+
+## Summary
+
+MongoDB works well for this system due to its flexibility and scalability. Proper indexing and sharding ensure good performance even as data volume grows.
