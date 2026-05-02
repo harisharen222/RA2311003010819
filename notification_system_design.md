@@ -231,7 +231,7 @@ db.notifications.insertOne({
 - Sharding based on userId helps distribute data across multiple nodes
 - Caching frequently accessed notifications reduces database load
 - Batch writes can improve performance during high traffic
-- Old notifications can be cleaned using a TTL index on createdAt
+- Old notifications can be automatically removed using a TTL index on createdAt (e.g., 30 days retention)
 
 ---
 
