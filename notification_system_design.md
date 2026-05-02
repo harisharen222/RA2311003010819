@@ -246,3 +246,88 @@ db.notifications.insertOne({
 ## Summary
 
 MongoDB works well for this system due to its flexibility and scalability. Proper indexing and sharding ensure good performance even as data volume grows.
+
+
+# Stage 3 — Query Optimization and Debugging
+
+## Problem
+
+The following query is slow:
+
+SELECT * FROM notifications
+WHERE studentID = 1042 AND isRead = false
+ORDER BY createdAt DESC;
+
+---
+
+## Why it is slow
+
+- There may be no proper index on studentID and isRead
+- Database may perform a full table scan
+- Sorting by createdAt without index increases cost
+- As data grows, performance degrades significantly
+
+---
+
+## Solution
+
+To optimize this query, we should create a compound index:
+
+(studentID, isRead, createdAt)
+
+This helps in:
+- Filtering by studentID and isRead efficiently
+- Sorting results by createdAt without extra computation
+
+---
+
+## Optimized query
+
+SELECT id, message, createdAt FROM notifications
+WHERE studentID = 1042 AND isRead = false
+ORDER BY createdAt DESC
+LIMIT 10;
+
+Notes:
+- LIMIT reduces data fetched
+- Improves response time
+
+---
+
+## Why not "index everything"
+
+Indexing every column is not a good idea because:
+
+- Increases storage overhead
+- Slows down write operations (insert/update)
+- Many indexes are unused and waste resources
+
+Indexes should only be created for frequently queried fields.
+
+---
+
+## Additional query
+
+Find students who received a placement notification in the last 7 days:
+
+SELECT DISTINCT studentID
+FROM notifications
+WHERE type = 'Placement'
+AND createdAt >= NOW() - INTERVAL 7 DAY;
+
+---
+
+## Improvements for large datasets
+
+- Use pagination with LIMIT and OFFSET
+- Avoid SELECT * (fetch only required fields)
+- Monitor slow queries using database tools
+- Regularly review index usage
+
+---
+
+## Summary
+
+The query was slow due to missing indexes and inefficient sorting.  
+Using a compound index and limiting results improves performance significantly.
+
