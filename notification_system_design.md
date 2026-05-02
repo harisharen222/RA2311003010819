@@ -499,3 +499,79 @@ This ensures data consistency and better fault tolerance.
 ## Summary
 
 The system should use asynchronous processing with queues to handle large-scale notifications. This improves reliability, scalability, and ensures proper failure handling.
+
+# Stage 6 — Notification Prioritization
+
+## Problem
+
+The system needs to display the top 10 most important notifications for a user.  
+Notifications keep coming continuously, so the system must handle updates efficiently.
+
+---
+
+## Approach
+
+Each notification is assigned a priority score based on:
+
+1. Type of notification
+2. Recency (timestamp)
+
+---
+
+## Priority rules
+
+Type weight:
+
+- Placement = 3
+- Result = 2
+- Event = 1
+
+Recent notifications are given higher importance.
+
+---
+
+## Priority calculation
+
+priority = typeWeight + recencyFactor
+
+Where:
+- typeWeight is based on notification type
+- recencyFactor is higher for newer notifications
+
+---
+
+## Implementation logic
+
+1. Fetch notifications from API
+2. Assign weight based on type
+3. Sort notifications by:
+   - Higher priority first
+   - If same priority, newer timestamp first
+4. Return top 10 notifications
+
+---
+
+## Example (pseudo code)
+
+```js id="r9k8lu"
+const getPriority = (notification) => {
+  const weights = {
+    Placement: 3,
+    Result: 2,
+    Event: 1
+  };
+
+  return weights[notification.type];
+};
+
+const getTopNotifications = (notifications) => {
+  return notifications
+    .sort((a, b) => {
+      const priorityDiff = getPriority(b) - getPriority(a);
+
+      if (priorityDiff !== 0) return priorityDiff;
+
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    })
+    .slice(0, 10);
+};
