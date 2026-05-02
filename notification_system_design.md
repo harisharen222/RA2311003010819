@@ -331,3 +331,85 @@ AND createdAt >= NOW() - INTERVAL 7 DAY;
 The query was slow due to missing indexes and inefficient sorting.  
 Using a compound index and limiting results improves performance significantly.
 
+
+
+# Stage 4 — System Performance Optimization
+
+## Problem
+
+The system is experiencing high load because notifications are fetched from the database every time a user opens the application.
+
+This leads to:
+- Increased database queries
+- Higher latency
+- Reduced system performance under heavy traffic
+
+---
+
+## Causes
+
+- Repeated database reads for the same data
+- No caching mechanism
+- Fetching all notifications without limits
+- Lack of pagination
+
+---
+
+## Solutions
+
+### 1. Caching
+
+Use a caching layer such as Redis.
+
+- Store recent notifications in cache
+- On request:
+  - First check cache
+  - If not present, fetch from database and update cache
+
+This reduces direct database load.
+
+---
+
+### 2. Pagination
+
+Fetch notifications in smaller batches:
+
+Example:
+GET /notifications?page=1&limit=10
+
+Benefits:
+- Reduces response size
+- Improves response time
+- Avoids unnecessary data transfer
+
+---
+
+### 3. Lazy loading
+
+Load notifications only when needed.
+
+- Initial load shows recent notifications
+- Older notifications are loaded on scroll
+
+---
+
+### 4. Background synchronization
+
+Instead of fetching every time:
+- Periodically sync notifications in background
+- Store them locally on client side
+
+---
+
+## Trade-offs
+
+- Caching introduces data consistency issues (stale data)
+- Pagination adds complexity in frontend handling
+- Background sync may delay latest updates
+
+---
+
+## Summary
+
+The performance issue is caused by repeated database access.  
+Using caching, pagination, and optimized fetching strategies significantly improves system scalability and reduces load.
