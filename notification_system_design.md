@@ -413,3 +413,89 @@ Instead of fetching every time:
 
 The performance issue is caused by repeated database access.  
 Using caching, pagination, and optimized fetching strategies significantly improves system scalability and reduces load.
+
+# Stage 5 — System Design and Reliability
+
+## Problem
+
+A notification is sent to 50,000 students using a loop:
+
+- Send email
+- Save notification in database
+- Push real-time notification
+
+If any step fails in between, the system becomes inconsistent.
+
+Example:
+- Email sent but notification not saved
+- Notification saved but push failed
+
+---
+
+## Issues in current approach
+
+- Operations are tightly coupled
+- No retry mechanism
+- System is not scalable for large users
+- Failure in one step affects the entire process
+
+---
+
+## Improved design
+
+### Use asynchronous processing
+
+Instead of handling everything in a loop, use a message queue.
+
+Steps:
+
+1. HR creates notification
+2. Notification is saved in database
+3. A message is pushed to a queue (e.g., Kafka or RabbitMQ)
+4. Workers consume the queue and process:
+   - Send email
+   - Push real-time notification
+
+---
+
+## Benefits
+
+- Decouples system components
+- Improves scalability
+- Allows independent failure handling
+- Supports retry mechanism
+
+---
+
+## Retry mechanism
+
+- If email sending fails, retry the task
+- Use exponential backoff
+- Store failed jobs for later processing
+
+---
+
+## Idempotency
+
+Ensure operations can be safely retried without duplication.
+
+Example:
+- Avoid sending duplicate emails
+- Use unique identifiers for notifications
+
+---
+
+## Should DB save and email happen together?
+
+No.
+
+- Saving to DB should happen first
+- Email and push notifications should be handled asynchronously
+
+This ensures data consistency and better fault tolerance.
+
+---
+
+## Summary
+
+The system should use asynchronous processing with queues to handle large-scale notifications. This improves reliability, scalability, and ensures proper failure handling.
